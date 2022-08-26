@@ -5,21 +5,7 @@ import json
 from json.decoder import JSONDecodeError
 
 from round_robin import get_schedule
-
-class Game:
-    def __init__(self, player1, player2):
-        self.player1_key  = player1
-        self.player2_key  = player2
-        self.player1_hand = []
-        self.player2_hand = []
-        self.discard_pile = []
-        self.draw_pile    = []
-
-    async def play(self):
-        pass
-
-    def get_keys(self):
-        return (self.player1_key, self.player2_key)
+from game import Game
 
 """
 CURRENT GAMES
@@ -102,10 +88,12 @@ async def init_handler(websocket):
             print(f"registered player {key}")
             register_player(key)
 
+            #sleep until tournament starts
+
             #handle further messages from this socket
             await general_handler(key, websocket)
         else:
-            raise ValueError('Not valid init message')
+            raise ValueError('Invalid init message')
 
     except (JSONDecodeError, ValueError) as e:
         await websocket.close(code=1003, reason=str(e))
