@@ -31,6 +31,8 @@ CURRENT GAMES
 """
 GAMES = GameHub()
 
+TOURNAMENT_IS_OVER = False
+
 """
 WEBSOCKETS SERVER LOGIC
 """
@@ -43,7 +45,7 @@ def has_valid_key(msg):
 
 #handles any subsequent messages (and publishes messages as well)
 async def general_handler(key, websocket):
-    while True:
+    while not TOURNAMENT_IS_OVER:
         #wait until new game for key is created
         game_created_event = GAMES.register_game_created(key)
         await game_created_event.wait()
@@ -138,6 +140,7 @@ async def play_game(key_pair):
     return winner
 
 async def match_make():
+    global TOURNAMENT_IS_OVER
     #sleep until tournament start
 
     #make round robin schedule
@@ -159,6 +162,7 @@ async def match_make():
             REGISTRY.record_win(key)
 
     print("All games played. Ending...")
+    TOURNAMENT_IS_OVER = True #makes all coroutines spawned by websocket server end
 
 """
 MAIN SCRIPT
