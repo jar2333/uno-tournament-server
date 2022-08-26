@@ -1,3 +1,5 @@
+import asyncio
+
 class Game:
     def __init__(self, player1, player2):
         self.player1_key  = player1
@@ -9,7 +11,10 @@ class Game:
 
         self.winner = None
 
-    def get_state(self) -> dict:
+        #event objects to .wait(), set() when corresponding turn starts, clear() when ends
+        self.is_turn = {player1: asyncio.Event(), player2: asyncio.Event()}
+
+    def get_start_state(self) -> dict:
         return {} #response
 
     def play(self, message) -> dict:
@@ -20,3 +25,6 @@ class Game:
 
     def get_winner(self) -> str:
         return self.winner
+
+    def register_is_turn(self, player_key) -> asyncio.Event:
+        return self.is_turn[player_key]

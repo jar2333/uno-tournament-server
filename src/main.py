@@ -51,9 +51,16 @@ async def general_handler(key, websocket):
         #Get game and send the current (init) state to the client.
         #This is the indication that they can start sending messages.
         game = GAMES.get_game(key)
-        websocket.send(json.dumps(game.get_state()))
+        websocket.send(json.dumps(game.get_start_state()))
 
         while not game.is_finished():
+
+            #wait until it is this player's turn to start reading.
+            #this has the added bonus that if the client message was not processed
+            #successfully, this will still be set() (nonblocking), so it will try again
+            is_turn_event = game.register_is_turn(key)
+            await is_turn_event.wait()
+
             try:
                 message = json.loads(await websocket.recv())
                 response = game.play(message)
