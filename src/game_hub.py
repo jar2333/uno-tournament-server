@@ -30,8 +30,8 @@ class GameHub:
     def set_game_ended_for(self, key):
         pass
 
-    def register_game_created(self, key):
+    def register_game_created(self, key) -> asyncio.Event:
         return asyncio.Event() #asyncio.Event to be awaited. Store in a dict
 
-    def register_game_ended(self, p1_key, p2_key):
+    def register_game_ended(self, p1_key, p2_key) -> asyncio.Event:
         return asyncio.Event() #asyncio.Event to be awaited.Store in a dict

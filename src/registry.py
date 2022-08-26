@@ -8,8 +8,8 @@ class Registry:
     def unregister_player(self, key):
         self.registered.remove(key)
 
-    def is_registered(self, key):
+    def is_registered(self, key) -> bool:
         return key in self.registered
 
-    def get_registered(self):
+    def get_registered(self) -> set:
         return self.registered

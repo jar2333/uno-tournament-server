@@ -48,8 +48,11 @@ async def general_handler(key, websocket):
         game_created_event = GAMES.register_game_created(key)
         await game_created_event.wait()
 
+        #Get game and send the current (init) state to the client.
+        #This is the indication that they can start sending messages.
         game = GAMES.get_game(key)
         websocket.send(json.dumps(game.get_state()))
+
         while not game.is_finished():
             try:
                 message = json.loads(await websocket.recv())

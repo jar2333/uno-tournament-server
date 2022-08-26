@@ -1,15 +1,15 @@
-def shift(lst):
+def shift(lst) -> list:
     last  = lst[-1]
     lst[1:] = lst[:-1]
     lst[0] = last
     return lst
 
-def get_round(keys):
+def get_round(keys) -> list:
     pair_amount = len(keys) // 2
     round = [(keys[i], keys[i+pair_amount]) for i in range(pair_amount)]
     return round
 
-def get_schedule(registered):
+def get_schedule(registered) -> list:
     keys = list(registered)
     if len(keys) % 2 == 1:
         keys.append(None) #add dummy key if uneven

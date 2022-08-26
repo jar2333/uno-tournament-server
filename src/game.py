@@ -7,11 +7,11 @@ class Game:
         self.discard_pile = []
         self.draw_pile    = []
 
-    def get_state(self):
+    def get_state(self) -> dict:
         return {} #response
 
-    def play(self, message):
+    def play(self, message) -> dict:
         return {} #response
 
-    def is_finished(self):
+    def is_finished(self) -> bool:
         return False
