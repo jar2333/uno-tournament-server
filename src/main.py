@@ -33,6 +33,8 @@ GAMES = GameHub()
 
 TOURNAMENT_IS_OVER = False
 
+TURN_TIMEOUT_IN_SECONDS = 15.0
+
 """
 WEBSOCKETS SERVER LOGIC
 """
@@ -64,12 +66,16 @@ async def general_handler(key, websocket):
             await is_turn_event.wait()
 
             try:
-                message = json.loads(await websocket.recv())
+                text = asyncio.wait_for(websocket.recv(), timeout=TURN_TIMEOUT_IN_SECONDS)
+                message = json.loads(text)
                 response = game.play(message)
                 await websocket.send(json.dumps(response))
+            except asyncio.TimeoutError:
+                #make the player lose!
+                pass
             except JSONDecodeError:
                 pass
-        
+
         #game finished, so send "game finished event for key" to hub
         #note: the game_ended event will only be sent to the play_game task once 
         #   BOTH player keys have called this method.
