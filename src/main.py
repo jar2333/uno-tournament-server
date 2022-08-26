@@ -44,7 +44,7 @@ def has_valid_key(msg):
 #handles any subsequent messages (and publishes messages as well)
 async def general_handler(key, websocket):
     while True:
-        #wait until new game is created
+        #wait until new game for key is created
         game_created_event = GAMES.register_game_created(key)
         await game_created_event.wait()
 
@@ -62,10 +62,10 @@ async def general_handler(key, websocket):
                 pass
         
         #game finished, so send "game finished event for key" to hub
-        #note: the game_ended event will only be sent once 
+        #note: the game_ended event will only be sent to the play_game task once 
         #   BOTH player keys have called this method.
         #   this ensures that no communication to the game 
-        #   is being conducted, hence it can be removed from hub.
+        #   is being conducted, hence it can safely be removed from hub.
         GAMES.set_game_ended_for(key)
 
 #handles the parsing of init message upon connection
