@@ -1,5 +1,3 @@
-import asyncio
-
 class Game:
     def __init__(self, player1, player2):
         self.player1_key  = player1
@@ -9,8 +7,11 @@ class Game:
         self.discard_pile = []
         self.draw_pile    = []
 
+    def get_state(self):
+        return {} #response
+
     def play(self, message):
         return {} #response
 
-    def get_keys(self):
-        return (self.player1_key, self.player2_key)
+    def is_finished(self):
+        return False

@@ -44,20 +44,26 @@ def has_valid_key(msg):
 #handles any subsequent messages (and publishes messages as well)
 async def general_handler(key, websocket):
     while True:
-        #instead... wait until game added (pub sub)?
-        #necessitates events in registry!
+        #wait until new game is created
+        game_created_event = GAMES.register_game_created(key)
+        await game_created_event.wait()
+
         game = GAMES.get_game(key)
-        if game is None:
-            #sleeps when there is no game, then continues
-            #analyze this in better detail later
-            await asyncio.sleep(1)
-            continue
-        try:
-            message = json.loads(await websocket.recv())
-            response = game.play(message)
-            await websocket.send(json.dumps(response))
-        except JSONDecodeError:
-            pass
+        websocket.send(json.dumps(game.get_state()))
+        while not game.is_finished():
+            try:
+                message = json.loads(await websocket.recv())
+                response = game.play(message)
+                await websocket.send(json.dumps(response))
+            except JSONDecodeError:
+                pass
+        
+        #game finished, so send "game finished event for key" to hub
+        #note: the game_ended event will only be sent once 
+        #   BOTH player keys have called this method.
+        #   this ensures that no communication to the game 
+        #   is being conducted, hence it can be removed from hub.
+        GAMES.set_game_ended_for(key)
 
 #handles the parsing of init message upon connection
 #add a refusal after the signup time has expired
@@ -100,14 +106,18 @@ MATCHMAKING AND GAME SIMULATION LOGIC
 async def play_game(key_pair):
     player1, player2 = key_pair
 
-    game = GAMES.add_game(player1, player2)
-    #wait until game is finished! (use an asyncio.Event)
-    await asyncio.Future()
+    #add game to hub
+    GAMES.add_game(player1, player2)
+
+    #wait until game is finished!
+    game_ended_event = GAMES.register_game_ended(player1, player2)
+    await game_ended_event.wait()
+
+    #remove game from hub
     GAMES.remove_game(player1, player2)
 
 async def match_make():
     #sleep until tournament start
-    await asyncio.sleep(5)
 
     #make round robin schedule
     schedule = get_schedule(REGISTRY.get_registered())
