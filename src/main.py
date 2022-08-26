@@ -4,58 +4,91 @@ import websockets
 import json
 from json.decoder import JSONDecodeError
 
+class Game:
+    def __init__(self, player1, player2):
+        pass
+
+    async def play(self):
+        pass
+
+"""
+WEBSOCKETS SERVER LOGIC
+"""
 KEYS = set()
 
-#key : websocket
-QUEUED = dict()
-
-#(player1_key, player2_key) : Game (object)
-GAMES = dict()
-
+REGISTERED = dict() #player_key : websocket
 
 def is_valid_init_message(msg):
-    return msg is dict and 'type' in msg and msg['type'] == 'init' and 'key' in msg
+    return 'type' in msg and msg['type'] == 'init' and 'key' in msg
 
+def has_valid_key(msg):
+    key = msg['key']
+    return key in KEYS and not key in REGISTERED
 
-def queue_player(websocket, key):
-    global QUEUED
-    QUEUED[key] = websocket
+def register_player(websocket, key):
+    global REGISTERED
+    REGISTERED[key] = websocket
 
+def unregister_player(key):
+    global REGISTERED
+    del REGISTERED[key]
 
-def unqueue_player(key):
-    global QUEUED
-    del QUEUED[key]
+def is_registered(key):
+    return key in REGISTERED
 
+#handles any subsequent messages (and publishes messages as well)
+async def general_handler(key, websocket):
+    await asyncio.Future()
 
+#handles the parsing of init message upon connection
 async def init_handler(websocket):
     key = None
     try:
+        #receive message from client
         msg = json.loads(await websocket.recv())
-        if is_valid_init_message(msg):
+        print(f"msg received: {msg}")
+
+        if is_valid_init_message(msg) and has_valid_key(msg):
             key = msg['key']
-            if key in KEYS and not key in QUEUED:
-                queue_player(websocket, key)
-            else:
-                websocket.close(reason='INVALID KEY IN INIT MESSAGE!')
-    except JSONDecodeError:
-        websocket.close(reason='INVALID MESSAGE!')
+
+            #register player
+            print(f"registered player {key}")
+            register_player(websocket, key)
+
+            #handle further messages from this socket
+            await general_handler(key, websocket)
+        else:
+            raise ValueError('Not valid init message')
+
+    except (JSONDecodeError, ValueError) as e:
+        await websocket.close(code=1003, reason=str(e))
+
     except websockets.ConnectionClosedOK:
-        if not (key is None) and key in QUEUED:
-            unqueue_player(key)
+        if not (key is None) and is_registered(key):
+            unregister_player(key)
 
-
+#starts websockets server
 async def main():
     async with websockets.serve(init_handler, '', 8001):
         await asyncio.Future()  # run forever
 
+"""
+MATCHMAKING AND GAME SIMULATION LOGIC
+"""
+async def match_make():
+    await asyncio.Future()
 
 if __name__ == '__main__':
     #parse keys
     with open('keys.txt', 'r') as f:
         for line in f.readlines():
             KEYS.add(line.rstrip('\n'))
+    print(KEYS)
 
     #run websockets server
-    asyncio.run(main())
-
-    print("launched server")
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(asyncio.gather(
+        main(),
+        match_make()
+    ))
+    loop.close()
