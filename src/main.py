@@ -1,4 +1,5 @@
 import asyncio
+import imp
 import websockets
 
 import json
@@ -6,6 +7,7 @@ from json.decoder import JSONDecodeError
 
 from round_robin import get_schedule
 from game import Game
+from registry import Registry
 
 """
 CURRENT GAMES
@@ -44,18 +46,7 @@ def parse_keys():
 """
 REGISTERED KEYS
 """
-REGISTERED = set()
-
-def register_player(key):
-    global REGISTERED
-    REGISTERED.add(key)
-
-def unregister_player(key):
-    global REGISTERED
-    REGISTERED.remove(key)
-
-def is_registered(key):
-    return key in REGISTERED
+REGISTRY = Registry()
 
 """
 WEBSOCKETS SERVER LOGIC
@@ -66,7 +57,7 @@ def is_valid_init_message(msg):
 
 def has_valid_key(msg):
     key = msg['key']
-    return key in KEYS and not key in REGISTERED
+    return key in KEYS and not REGISTRY.is_registered(key)
 
 #handles any subsequent messages (and publishes messages as well)
 async def general_handler(key, websocket):
@@ -86,7 +77,7 @@ async def init_handler(websocket):
 
             #register player
             print(f"registered player {key}")
-            register_player(key)
+            REGISTRY.register_player(key)
 
             #sleep until tournament starts
 
@@ -99,8 +90,8 @@ async def init_handler(websocket):
         await websocket.close(code=1003, reason=str(e))
 
     except websockets.ConnectionClosedOK:
-        if not key is None and is_registered(key):
-            unregister_player(key)
+        if not key is None and REGISTRY.is_registered(key):
+            REGISTRY.unregister_player(key)
 
 #starts websockets server
 async def main():
@@ -123,7 +114,7 @@ async def match_make():
     await asyncio.sleep(5)
 
     #make round robin schedule
-    schedule = get_schedule(REGISTERED)
+    schedule = get_schedule(REGISTRY.get_registered())
 
     #iterate through round robin rounds
     for round in schedule:
