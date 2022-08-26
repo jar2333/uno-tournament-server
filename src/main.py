@@ -8,29 +8,7 @@ from json.decoder import JSONDecodeError
 from round_robin import get_schedule
 from game import Game
 from registry import Registry
-
-"""
-CURRENT GAMES
-"""
-#player_key : Game
-GAMES = dict()
-
-def add_game(game):
-    global GAMES
-    p1, p2 = game.get_keys() 
-    GAMES[p1] = game
-    GAMES[p2] = game
-
-def remove_game(game):
-    global GAMES
-    p1, p2 = game.get_keys() 
-    del GAMES[p1]
-    del GAMES[p2]
-
-def get_game(key):
-    if key in GAMES:
-        return GAMES[key]
-    return None
+from game_hub import GameHub
 
 """
 PERMISSIBLE KEYS
@@ -47,6 +25,12 @@ def parse_keys():
 REGISTERED KEYS
 """
 REGISTRY = Registry()
+
+"""
+CURRENT GAMES
+"""
+#player_key : Game
+GAMES = GameHub()
 
 """
 WEBSOCKETS SERVER LOGIC
@@ -103,11 +87,10 @@ MATCHMAKING AND GAME SIMULATION LOGIC
 """
 async def play_game(key_pair):
     player1, player2 = key_pair
-    game = Game(player1, player2)
 
-    add_game(game)
+    game = GAMES.add_game(player1, player2)
     await game.play()
-    remove_game(game)
+    GAMES.remove_game(player1, player2)
 
 async def match_make():
     #sleep until tournament start
