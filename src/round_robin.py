@@ -17,9 +17,9 @@ def get_schedule(registered):
     schedule = []
 
     last_keys  = keys
-    schedule.append(get_round(keys))
+    schedule.append(get_round(last_keys))
     for round in range(len(keys) - 2):
         last_keys[1:] = shift(last_keys[1:])
-        schedule.append(get_round(keys))
+        schedule.append(get_round(last_keys))
     
     return schedule
