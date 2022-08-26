@@ -29,13 +29,11 @@ REGISTRY = Registry()
 """
 CURRENT GAMES
 """
-#player_key : Game
 GAMES = GameHub()
 
 """
 WEBSOCKETS SERVER LOGIC
 """
-
 def is_valid_init_message(msg):
     return 'type' in msg and msg['type'] == 'init' and 'key' in msg
 
@@ -45,7 +43,21 @@ def has_valid_key(msg):
 
 #handles any subsequent messages (and publishes messages as well)
 async def general_handler(key, websocket):
-    await asyncio.Future()
+    while True:
+        #instead... wait until game added (pub sub)?
+        #necessitates events in registry!
+        game = GAMES.get_game(key)
+        if game is None:
+            #sleeps when there is no game, then continues
+            #analyze this in better detail later
+            await asyncio.sleep(1)
+            continue
+        try:
+            message = json.loads(await websocket.recv())
+            response = game.play(message)
+            await websocket.send(json.dumps(response))
+        except JSONDecodeError:
+            pass
 
 #handles the parsing of init message upon connection
 #add a refusal after the signup time has expired
@@ -73,7 +85,7 @@ async def init_handler(websocket):
     except (JSONDecodeError, ValueError) as e:
         await websocket.close(code=1003, reason=str(e))
 
-    except websockets.ConnectionClosedOK:
+    except websockets.ConnectionClosed:
         if not key is None and REGISTRY.is_registered(key):
             REGISTRY.unregister_player(key)
 
@@ -89,7 +101,8 @@ async def play_game(key_pair):
     player1, player2 = key_pair
 
     game = GAMES.add_game(player1, player2)
-    await game.play()
+    #wait until game is finished! (use an asyncio.Event)
+    await asyncio.Future()
     GAMES.remove_game(player1, player2)
 
 async def match_make():
