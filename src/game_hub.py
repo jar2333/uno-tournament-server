@@ -28,11 +28,11 @@ class GameHub:
     #   BOTH player keys have called this method.
     #   this ensures that no communication to the game 
     #   is being conducted, hence it can be removed from hub.    
-    def set_game_ended_for(self, key):
+    def publish_game_ended_for(self, key):
         pass
 
-    def register_game_created(self, key) -> asyncio.Event:
+    def subscribe_game_created(self, key) -> asyncio.Event:
         return asyncio.Event() #asyncio.Event to be awaited. Store in a dict
 
-    def register_game_ended(self, p1_key, p2_key) -> asyncio.Event:
+    def subscribe_game_ended(self, p1_key, p2_key) -> asyncio.Event:
         return asyncio.Event() #asyncio.Event to be awaited.Store in a dict

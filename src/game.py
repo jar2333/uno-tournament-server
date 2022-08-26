@@ -26,5 +26,5 @@ class Game:
     def get_winner(self) -> str:
         return self.winner
 
-    def register_is_turn(self, player_key) -> asyncio.Event:
+    def subscribe_is_turn(self, player_key) -> asyncio.Event:
         return self.is_turn[player_key]

@@ -49,7 +49,7 @@ def has_valid_key(msg):
 async def general_handler(key, websocket):
     while not TOURNAMENT_IS_OVER:
         #wait until new game for key is created
-        game_created_event = GAMES.register_game_created(key)
+        game_created_event = GAMES.subscribe_game_created(key)
         await game_created_event.wait()
 
         #Get game and send the current (init) state to the client.
@@ -62,7 +62,7 @@ async def general_handler(key, websocket):
             #wait until it is this player's turn to start reading.
             #this has the added bonus that if the client message was not processed
             #successfully, this will still be set() (nonblocking), so it will try again
-            is_turn_event = game.register_is_turn(key)
+            is_turn_event = game.subscribe_is_turn(key)
             await is_turn_event.wait()
 
             try:
@@ -81,7 +81,7 @@ async def general_handler(key, websocket):
         #   BOTH player keys have called this method.
         #   this ensures that no communication to the game 
         #   is being conducted, hence it can safely be removed from hub.
-        GAMES.set_game_ended_for(key)
+        GAMES.publish_game_ended_for(key)
 
 #handles the parsing of init message upon connection
 #add a refusal after the signup time has expired
@@ -134,7 +134,7 @@ async def play_game(key_pair):
     game = GAMES.add_game(player1, player2)
 
     #wait until game is finished!
-    game_ended_event = GAMES.register_game_ended(player1, player2)
+    game_ended_event = GAMES.subscribe_game_ended(player1, player2)
     await game_ended_event.wait()
 
     #remove game from hub
