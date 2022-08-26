@@ -7,6 +7,8 @@ class Game:
         self.discard_pile = []
         self.draw_pile    = []
 
+        self.winner = None
+
     def get_state(self) -> dict:
         return {} #response
 
@@ -15,3 +17,6 @@ class Game:
 
     def is_finished(self) -> bool:
         return False
+
+    def get_winner(self) -> str:
+        return self.winner

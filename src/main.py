@@ -109,8 +109,14 @@ MATCHMAKING AND GAME SIMULATION LOGIC
 async def play_game(key_pair):
     player1, player2 = key_pair
 
+    #win by default checks (happens when # of players is uneven)
+    if player1 is None:
+        return player2
+    elif player2 is None:
+        return player1
+
     #add game to hub
-    GAMES.add_game(player1, player2)
+    game = GAMES.add_game(player1, player2)
 
     #wait until game is finished!
     game_ended_event = GAMES.register_game_ended(player1, player2)
@@ -118,6 +124,11 @@ async def play_game(key_pair):
 
     #remove game from hub
     GAMES.remove_game(player1, player2)
+        
+    #Placeholder way of getting the winner, so the score can be tallied
+    #if it works, it works...
+    winner = game.get_winner() 
+    return winner
 
 async def match_make():
     #sleep until tournament start
@@ -131,8 +142,13 @@ async def match_make():
 
         #games played in parallel in each round
         game_loop = asyncio.get_event_loop()
-        game_loop.run_until_complete(asyncio.gather(*coroutines))
+
+        #results contains the winning keys of each game
+        results = game_loop.run_until_complete(asyncio.gather(*coroutines))
+
         game_loop.close()
+
+        #tally up the score for winning players
 
     print("All games played. Ending...")
 

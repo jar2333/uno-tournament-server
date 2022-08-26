@@ -9,10 +9,11 @@ class GameHub:
         self.games = dict()
     
     #This calls set() on the corresponding game_created events
-    def add_game(self, p1, p2):
+    def add_game(self, p1, p2) -> Game:
         game = Game(p1, p2)
         self.games[p1] = game
         self.games[p2] = game
+        return game
 
     def remove_game(self, p1, p2):
         del self.games[p1]
