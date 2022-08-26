@@ -1,15 +1,18 @@
 class Registry:
     def __init__(self):
-        self.registered = set()
+        self.registered = dict()
 
     def register_player(self, key):
-        self.registered.add(key)
+        self.registered[key] = 0
 
     def unregister_player(self, key):
-        self.registered.remove(key)
+        del self.registered[key]
 
     def is_registered(self, key) -> bool:
         return key in self.registered
 
-    def get_registered(self) -> set:
+    def get_registered(self) -> dict:
         return self.registered
+
+    def record_win(self, key):
+        self.registered[key] += 1

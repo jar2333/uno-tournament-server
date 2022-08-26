@@ -140,15 +140,16 @@ async def match_make():
     for round in schedule:
         coroutines = [play_game(pair) for pair in round]
 
-        #games played in parallel in each round
-        game_loop = asyncio.get_event_loop()
-
+        #Games played in parallel in each round
         #results contains the winning keys of each game
-        results = game_loop.run_until_complete(asyncio.gather(*coroutines))
 
+        game_loop = asyncio.get_event_loop()
+        results = game_loop.run_until_complete(asyncio.gather(*coroutines))
         game_loop.close()
 
         #tally up the score for winning players
+        for key in results:
+            REGISTRY.record_win(key)
 
     print("All games played. Ending...")
 
