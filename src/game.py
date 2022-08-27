@@ -28,8 +28,14 @@ class Game:
         return self.winner
 
     def set_winner(self, winner_key):
-        self.winner = winner_key
+        self.winner = winner_key #set winner first, then set as finished
         self.is_finished_event.set()
+
+    def forfeit(self, key):
+        if key == self.player1_key:
+            self.set_winner(self.player2_key)
+        else:
+            self.set_winner(self.player1_key)
 
     def subscribe_is_turn(self, player_key) -> asyncio.Event:
         return self.is_turn_events[player_key]

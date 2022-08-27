@@ -6,7 +6,6 @@ import json
 from json.decoder import JSONDecodeError
 
 from round_robin import get_schedule
-from game import Game
 from registry import Registry
 from game_hub import GameHub
 
@@ -55,6 +54,8 @@ async def general_handler(key, websocket):
         #Get game and send the current (init) state to the client.
         #This is the indication that they can start sending messages.
         game = GAMES.get_game(key)
+        if game is None: #shouldn't happen, but just in case it does...
+            continue
         websocket.send(json.dumps(game.get_start_state()))
 
         while not game.is_finished():
@@ -65,16 +66,40 @@ async def general_handler(key, websocket):
             is_turn_event = game.subscribe_is_turn(key)
             await is_turn_event.wait()
 
+            #game start timer?
+
             try:
+                """
+                ADD TIMING!!!
+                """
                 text = asyncio.wait_for(websocket.recv(), timeout=TURN_TIMEOUT_IN_SECONDS)
                 message = json.loads(text)
-                response = game.play(message)
+
+                #Game can either end turn here or finish entirely.
+                #In case of invalid action, nothing occurs (null response).
+                #figure out turn timeout in context of null response (needs more sophisticated timing)
+                response = game.play(message) 
+
+                #send response to client
                 await websocket.send(json.dumps(response))
             except asyncio.TimeoutError:
-                #make the player lose!
-                pass
+                #make the player lose (set winner && finish game)!
+                game.forfeit(key)
             except JSONDecodeError:
                 pass
+
+        #Past while loop, game is finished
+
+        #wait a second for game to be removed from GameHub 
+        #(makes game_created_event blocking again)
+        await asyncio.sleep(2)
+
+        #single key game removal
+        #it's fine since it is idempotent wrt to key pairs
+        #this guarantees that game_created_event will be blocking
+        #both for this client and its opponent
+        #maybe trickier than I think
+        # GAMES.remove_game(key)
 
 #handles the parsing of init message upon connection
 #add a refusal after the signup time has expired
