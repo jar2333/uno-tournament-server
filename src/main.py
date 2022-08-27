@@ -76,13 +76,6 @@ async def general_handler(key, websocket):
             except JSONDecodeError:
                 pass
 
-        #game finished, so send "game finished event for key" to hub
-        #note: the game_ended event will only be sent to the play_game task once 
-        #   BOTH player keys have called this method.
-        #   this ensures that no communication to the game 
-        #   is being conducted, hence it can safely be removed from hub.
-        GAMES.publish_game_ended_for(key)
-
 #handles the parsing of init message upon connection
 #add a refusal after the signup time has expired
 async def init_handler(websocket):
@@ -134,15 +127,15 @@ async def play_game(key_pair):
     game = GAMES.add_game(player1, player2)
 
     #wait until game is finished!
-    game_ended_event = GAMES.subscribe_game_ended(player1, player2)
+    game_ended_event = game.subscribe_is_finished()
     await game_ended_event.wait()
+
+    #Get winner of game
+    winner = game.get_winner() 
 
     #remove game from hub
     GAMES.remove_game(player1, player2)
-        
-    #Placeholder way of getting the winner, so the score can be tallied
-    #if it works, it works...
-    winner = game.get_winner() 
+
     return winner
 
 async def match_make():

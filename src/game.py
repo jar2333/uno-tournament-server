@@ -11,8 +11,9 @@ class Game:
 
         self.winner = None
 
-        #event objects to .wait(), set() when corresponding turn starts, clear() when ends
-        self.is_turn = {player1: asyncio.Event(), player2: asyncio.Event()}
+        #Event objects
+        self.is_turn_events = {player1: asyncio.Event(), player2: asyncio.Event()}
+        self.is_finished_event = asyncio.Event()
 
     def get_start_state(self) -> dict:
         return {} #response
@@ -21,10 +22,13 @@ class Game:
         return {} #response
 
     def is_finished(self) -> bool:
-        return False
+        return self.is_finished_event.is_set()
 
     def get_winner(self) -> str:
         return self.winner
 
     def subscribe_is_turn(self, player_key) -> asyncio.Event:
-        return self.is_turn[player_key]
+        return self.is_turn_events[player_key]
+
+    def subscribe_is_finished(self) -> asyncio.Event:
+        return self.is_finished_event
