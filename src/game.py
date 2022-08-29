@@ -16,13 +16,13 @@ class Game(): #(ABC):
         self.is_turn_events[player1].set()
 
 
-    # @abstractmethod
-    def __interpret_message(self, key: str, message: dict) -> dict:
-        return {"type": "state", "turn": key, "echo": str(message)}
+    @abstractmethod
+    def interpret_message(self, key: str, message: dict) -> dict:
+        return {}
 
-    # @abstractmethod
+    @abstractmethod
     def get_start_state(self) -> dict:
-        return {"type": "state", "turn": self.player1_key}
+        return {}
 
     async def play(self, key, message) -> dict:
         response = self.__interpret_message(key, message)

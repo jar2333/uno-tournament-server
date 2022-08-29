@@ -1,4 +1,6 @@
 from game import Game
+from game_factory import get_new_game
+
 import asyncio
 
 
@@ -15,7 +17,7 @@ class GameHub:
     def add_game(self, p1, p2) -> Game:
 
         #create game
-        game = Game(p1, p2)
+        game = get_new_game(p1, p2)
         self.games[p1] = game
         self.games[p2] = game
 
