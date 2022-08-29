@@ -23,6 +23,7 @@ class GameHub:
         for key in (p1, p2):
             if not key in self.created:
                 self.created[key] = asyncio.Event()
+                self.removed[key] = asyncio.Event()
             self.created[key].set()
 
         return game
