@@ -14,7 +14,7 @@ class Game(ABC):
 
 
     @abstractmethod
-    def __interpret_message(self, key, message) -> dict:
+    def __interpret_message(self, key: str, message: dict) -> dict:
         return {}
 
     @abstractmethod
