@@ -10,6 +10,12 @@ from round_robin import get_schedule
 from registry import Registry
 from game_hub import GameHub
 
+
+"""
+CONFIG
+"""
+TURN_TIMEOUT_IN_SECONDS = 15.0
+
 """
 PERMISSIBLE KEYS
 """
@@ -32,8 +38,6 @@ CURRENT GAMES
 GAMES = GameHub()
 
 TOURNAMENT_IS_OVER = False
-
-TURN_TIMEOUT_IN_SECONDS = 15.0
 
 """
 WEBSOCKETS SERVER LOGIC
@@ -66,6 +70,11 @@ async def general_handler(key, websocket):
             #successfully, this will still be set() (nonblocking), so it will try again
             is_turn_event = game.subscribe_is_turn(key)
             await is_turn_event.wait()
+
+            #check for other player, who was waiting for their turn
+            #  while this player may have ended game in thgeirs
+            if game.is_finished():
+                break
 
             #WEBSOCKET MESSAGE READING/PARSING LOOP
             start_time = time.time()
