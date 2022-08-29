@@ -50,6 +50,8 @@ class Game(ABC):
     def set_winner(self, winner_key):
         self.winner = winner_key #set winner first, then set as finished
         self.is_finished_event.set()
+        for k in self.is_turn_events:
+            self.is_turn_events[k].set() #no longer block for both players
 
     def __get_opponent_key(self, key):
         if key == self.player1_key:

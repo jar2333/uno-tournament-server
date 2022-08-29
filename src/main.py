@@ -7,6 +7,8 @@ import json
 from json.decoder import JSONDecodeError
 
 from round_robin import get_schedule
+from parsing import is_valid_message
+
 from registry import Registry
 from game_hub import GameHub
 
@@ -72,7 +74,7 @@ async def general_handler(key, websocket):
             await is_turn_event.wait()
 
             #check for other player, who was waiting for their turn
-            #  while this player may have ended game in thgeirs
+            #  while this player may have ended game in theirs
             if game.is_finished():
                 break
 
@@ -80,11 +82,28 @@ async def general_handler(key, websocket):
             start_time = time.time()
             time_elapsed = 0
             while True:
+                time_elapsed = time.time() - start_time
                 time_remaining = TURN_TIMEOUT_IN_SECONDS - time_elapsed
-                text = "{}"
-
+                #try receiving json from client
                 try:
+                    #receive from websocket
                     text = asyncio.wait_for(websocket.recv(), timeout=time_remaining)
+
+                    #parse json into message
+                    message = json.loads(text)
+
+                    #continue parsing if message is not valid
+                    if not is_valid_message(message):
+                        continue
+
+                    #Game can either end turn here or finish entirely.
+                    response = game.play(key, message)
+
+                    #send response to client
+                    await websocket.send(json.dumps(response))
+
+                    #break out of parsing loop
+                    break
                 except asyncio.TimeoutError:
                     #make the player lose!
                     game.forfeit(key)
@@ -94,23 +113,9 @@ async def general_handler(key, websocket):
                     game.forfeit(key)
                     REGISTRY.disqualify_player(key)
                     break
-
-                time_elapsed = time.time() - start_time
-
-                try:
-                    message = json.loads(text)
                 except JSONDecodeError:
                     #malformed json is skipped
-                    continue
-
-                #Game can either end turn here or finish entirely.
-                #In case of invalid action, nothing occurs to game (null response).
-                response = game.play(key, message) 
-
-                #send response to client
-                await websocket.send(json.dumps(response))
-
-                
+                    continue  
 
         #Past while loop, game is finished
         #wait for game to be removed from GameHub 
@@ -186,6 +191,9 @@ async def play_game(key_pair):
 async def match_make():
     global TOURNAMENT_IS_OVER
     #sleep until tournament start
+    for i in range(25):
+        await asyncio.sleep(5)
+        print(f"{125 - (i*5)} seconds remain until tournament start.")
 
     #make round robin schedule
     schedule = get_schedule(REGISTRY.get_registered())
