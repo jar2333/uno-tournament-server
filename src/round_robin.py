@@ -1,7 +1,7 @@
 def shift(lst) -> list:
-    last  = lst[-1]
+    last    = lst[-1]
     lst[1:] = lst[:-1]
-    lst[0] = last
+    lst[0]  = last
     return lst
 
 def get_round(keys) -> list:
