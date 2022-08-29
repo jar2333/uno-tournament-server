@@ -1,4 +1,5 @@
 import asyncio
+import sched
 import time
 from winreg import REG_SZ
 import websockets
@@ -39,7 +40,7 @@ CURRENT GAMES
 """
 GAMES = GameHub()
 
-TOURNAMENT_IS_OVER = False
+TOURNAMENT_IS_OVER_EVENT = asyncio.Event()
 
 """
 WEBSOCKETS SERVER LOGIC
@@ -53,8 +54,9 @@ def has_valid_key(msg):
 
 #handles any subsequent messages (and publishes messages as well)
 async def general_handler(key, websocket):
-    while not TOURNAMENT_IS_OVER:
+    while not TOURNAMENT_IS_OVER_EVENT.is_set():
         #wait until new game for key is created
+        print(f"Player {key} waiting for game...")
         game_created_event = GAMES.subscribe_game_created(key)
         await game_created_event.wait()
 
@@ -63,6 +65,7 @@ async def general_handler(key, websocket):
         game = GAMES.get_game(key)
         if game is None: #shouldn't happen, but just in case it does...
             continue
+        print(f"Game found! Players: ({game.player1_key},{game.player2_key})")
         websocket.send(json.dumps(game.get_start_state()))
 
         while not game.is_finished():
@@ -156,7 +159,7 @@ async def init_handler(websocket):
 #starts websockets server
 async def main():
     async with websockets.serve(init_handler, '', 8001):
-        await asyncio.Future()  # run forever
+        await TOURNAMENT_IS_OVER_EVENT.wait()
 
 """
 MATCHMAKING AND GAME SIMULATION LOGIC
@@ -191,12 +194,16 @@ async def play_game(key_pair):
 async def match_make():
     global TOURNAMENT_IS_OVER
     #sleep until tournament start
-    for i in range(25):
+    r = 24
+    for i in range(r):
+        print(f"{(5*r) - (i*5)} seconds remain until tournament start.")
         await asyncio.sleep(5)
-        print(f"{125 - (i*5)} seconds remain until tournament start.")
 
     #make round robin schedule
     schedule = get_schedule(REGISTRY.get_registered())
+    print("Round-robin schedule:")
+    for round in schedule:
+        print(round)
 
     #iterate through round robin rounds
     for round in schedule:
@@ -204,17 +211,16 @@ async def match_make():
 
         #Games played in parallel in each round
         #results contains the winning keys of each game
-
-        game_loop = asyncio.get_event_loop()
-        results = game_loop.run_until_complete(asyncio.gather(*coroutines))
-        game_loop.close()
+        results = await asyncio.gather(*coroutines)
 
         #tally up the score for winning players
-        for key in results:
+        for i in range(len(results)):
+            key = results[i]
+            print(f"The {i}th game was won by {key}")
             REGISTRY.record_win(key)
 
     print("All games played. Ending...")
-    TOURNAMENT_IS_OVER = True #makes all coroutines spawned by websocket server end
+    TOURNAMENT_IS_OVER_EVENT.set() #makes all coroutines spawned by websocket server end
 
 """
 MAIN SCRIPT
