@@ -25,7 +25,7 @@ class Game(): #(ABC):
         return {}
 
     async def play(self, key, message) -> dict:
-        response = self.__interpret_message(key, message)
+        response = self.interpret_message(key, message)
 
         #set the turn start/end events
         self.is_turn_events[key].clear()
