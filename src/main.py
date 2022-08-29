@@ -67,7 +67,6 @@ async def general_handler(key, websocket):
             await is_turn_event.wait()
 
             #game start timer?
-
             try:
                 """
                 ADD TIMING!!!
@@ -78,7 +77,7 @@ async def general_handler(key, websocket):
                 #Game can either end turn here or finish entirely.
                 #In case of invalid action, nothing occurs (null response).
                 #figure out turn timeout in context of null response (needs more sophisticated timing)
-                response = game.play(message) 
+                response = game.play(key, message) 
 
                 #send response to client
                 await websocket.send(json.dumps(response))
@@ -89,17 +88,10 @@ async def general_handler(key, websocket):
                 pass
 
         #Past while loop, game is finished
+        #wait for game to be removed from GameHub 
+        game_removed_event = GAMES.subscribe_game_removed(key)
+        await game_removed_event.wait()
 
-        #wait a second for game to be removed from GameHub 
-        #(makes game_created_event blocking again)
-        await asyncio.sleep(2)
-
-        #single key game removal
-        #it's fine since it is idempotent wrt to key pairs
-        #this guarantees that game_created_event will be blocking
-        #both for this client and its opponent
-        #maybe trickier than I think
-        # GAMES.remove_game(key)
 
 #handles the parsing of init message upon connection
 #add a refusal after the signup time has expired
