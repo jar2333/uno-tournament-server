@@ -60,6 +60,9 @@ async def general_handler(key, websocket):
         game_created_event = GAMES.subscribe_game_created(key)
         await game_created_event.wait()
 
+        if TOURNAMENT_IS_OVER_EVENT.is_set():
+            return
+
         #Get game and send the current (init) state to the client.
         #This is the indication that they can start sending messages.
         game = GAMES.get_game(key)
@@ -221,6 +224,7 @@ async def match_make():
 
     print("All games played. Ending...")
     TOURNAMENT_IS_OVER_EVENT.set() #makes all coroutines spawned by websocket server end
+    GAMES.finalize()
 
 """
 MAIN SCRIPT
@@ -230,10 +234,8 @@ if __name__ == '__main__':
     parse_keys()
     print(KEYS)
 
-    #run websockets server
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(asyncio.gather(
+    #run websockets server and match_making
+    asyncio.run(asyncio.gather(
         main(),
         match_make()
     ))
-    loop.close()
