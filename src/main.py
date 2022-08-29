@@ -1,5 +1,6 @@
 import asyncio
-import imp
+import time
+from winreg import REG_SZ
 import websockets
 
 import json
@@ -66,26 +67,41 @@ async def general_handler(key, websocket):
             is_turn_event = game.subscribe_is_turn(key)
             await is_turn_event.wait()
 
-            #game start timer?
-            try:
-                """
-                ADD TIMING!!!
-                """
-                text = asyncio.wait_for(websocket.recv(), timeout=TURN_TIMEOUT_IN_SECONDS)
-                message = json.loads(text)
+            #WEBSOCKET MESSAGE READING/PARSING LOOP
+            start_time = time.time()
+            time_elapsed = 0
+            while True:
+                time_remaining = TURN_TIMEOUT_IN_SECONDS - time_elapsed
+                text = "{}"
+
+                try:
+                    text = asyncio.wait_for(websocket.recv(), timeout=time_remaining)
+                except asyncio.TimeoutError:
+                    #make the player lose!
+                    game.forfeit(key)
+                    break
+                except websockets.ConnectionClosed:
+                    #make the player lose AND disqualify them
+                    game.forfeit(key)
+                    REGISTRY.disqualify_player(key)
+                    break
+
+                time_elapsed = time.time() - start_time
+
+                try:
+                    message = json.loads(text)
+                except JSONDecodeError:
+                    #malformed json is skipped
+                    continue
 
                 #Game can either end turn here or finish entirely.
-                #In case of invalid action, nothing occurs (null response).
-                #figure out turn timeout in context of null response (needs more sophisticated timing)
+                #In case of invalid action, nothing occurs to game (null response).
                 response = game.play(key, message) 
 
                 #send response to client
                 await websocket.send(json.dumps(response))
-            except asyncio.TimeoutError:
-                #make the player lose (set winner && finish game)!
-                game.forfeit(key)
-            except JSONDecodeError:
-                pass
+
+                
 
         #Past while loop, game is finished
         #wait for game to be removed from GameHub 
@@ -134,10 +150,13 @@ MATCHMAKING AND GAME SIMULATION LOGIC
 async def play_game(key_pair):
     player1, player2 = key_pair
 
-    #win by default checks (happens when # of players is uneven)
-    if player1 is None:
+    #if both players are disqualified/invalid, no winner
+    if (player1 is None or REGISTRY.is_disqualified(player1)) and (player2 is None or REGISTRY.is_disqualified(player2)):
+        return None
+    #win by default checks (happens when # of players is uneven or one is dq'd)
+    elif player1 is None or REGISTRY.is_disqualified(player1):
         return player2
-    elif player2 is None:
+    elif player2 is None or REGISTRY.is_disqualified(player2):
         return player1
 
     #add game to hub
