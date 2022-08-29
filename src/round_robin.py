@@ -6,7 +6,7 @@ def shift(lst) -> list:
 
 def get_round(keys) -> list:
     pair_amount = len(keys) // 2
-    round = [(keys[i], keys[i+pair_amount]) for i in range(pair_amount)]
+    round = [(keys[i], keys[-(i+1)]) for i in range(pair_amount)]
     return round
 
 def get_schedule(registered) -> list:
