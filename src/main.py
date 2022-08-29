@@ -8,7 +8,7 @@ import json
 from json.decoder import JSONDecodeError
 
 from round_robin import get_schedule
-from parsing import is_valid_message, is_valid_init_message, has_valid_key
+from messages import is_valid_message, is_valid_init_message, has_valid_key, START_TURN_MESSAGE
 
 from registry import Registry
 from game_hub import GameHub
@@ -44,6 +44,10 @@ GAMES = GameHub()
 """
 WEBSOCKETS SERVER LOGIC
 """
+
+async def send_message(websocket, message):
+    await websocket.send(json.dumps(message))
+
 #handles any subsequent messages (and publishes messages as well)
 async def general_handler(key, websocket):
     while True:
@@ -58,6 +62,8 @@ async def general_handler(key, websocket):
         if game is None: #shouldn't happen, but just in case it does...
             continue
         print(f"Game found! Players: ({game.player1_key},{game.player2_key})")
+
+        #send the start state of the game
         await websocket.send(json.dumps(game.get_start_state()))
 
         while not game.is_finished():
@@ -73,6 +79,9 @@ async def general_handler(key, websocket):
             #  while this player may have ended game in theirs
             if game.is_finished():
                 break
+
+            #send message that turn has started
+            await websocket.send(json.dumps(START_TURN_MESSAGE))
 
             print(f"Reading player {key} input.")
             #WEBSOCKET MESSAGE READING/PARSING LOOP
@@ -115,7 +124,7 @@ async def general_handler(key, websocket):
                     #make the player lose AND disqualify them
                     print(f"Player {key} disconnected. They lose the game and get disqualified.")
                     game.forfeit(key)
-                    REGISTRY.disqualify_player(key)
+                    REGISTRY.disqualify_player(key) #perhaps just make it a "disconnect_player"?
                     break
                 except JSONDecodeError:
                     #malformed json is skipped

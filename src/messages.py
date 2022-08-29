@@ -1,5 +1,7 @@
 from registry import Registry
 
+START_TURN_MESSAGE = {"type": "start_turn"}
+
 def is_valid_message(message: dict) -> bool:
     if not 'type' in message:
         return False
