@@ -12,6 +12,9 @@ class Game(ABC):
         self.is_turn_events = {player1: asyncio.Event(), player2: asyncio.Event()}
         self.is_finished_event = asyncio.Event()
 
+        #set player1's is_turn flag
+        self.is_turn_events[player1].set()
+
 
     @abstractmethod
     def __interpret_message(self, key: str, message: dict) -> dict:
