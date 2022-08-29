@@ -113,20 +113,12 @@ async def general_handler(key, websocket):
                     #send response to client
                     await websocket.send(json.dumps(response))
 
-                    #SEND RESPONSE TO OTHER CLIENT TOO! (facilitating callbacks instead of polling)
-
                     #break out of parsing loop
                     break
                 except asyncio.TimeoutError:
                     #make the player lose!
                     print(f"Player {key} timed out, and lose the game.")
                     game.forfeit(key)
-                    break
-                except websockets.ConnectionClosed:
-                    #make the player lose AND disqualify them
-                    print(f"Player {key} disconnected. They lose the game and get disqualified.")
-                    game.forfeit(key)
-                    REGISTRY.disqualify_player(key) #perhaps just make it a "disconnect_player"?
                     break
                 except JSONDecodeError:
                     #malformed json is skipped
@@ -168,8 +160,9 @@ async def init_handler(websocket):
         await websocket.close(code=1003, reason=str(e))
 
     except websockets.ConnectionClosed:
-        print(f"player {key} disconnected")
+        #this always works because of the start_turn message send attempt!
         if TOURNAMENT_STARTED:
+            print(f"Player {key} disconnected. They lose any game they were in and are disqualified.")
             game = GAMES.get_game(key)
             if not game is None:
                 game.forfeit(key)
@@ -217,7 +210,7 @@ async def play_game(key_pair):
 
 async def match_make():
     global TOURNAMENT_STARTED
-    
+
     #sleep until tournament start
     r = int(TIME_UNTIL_TOURNAMENT // 5)
     for i in range(r):

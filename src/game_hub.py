@@ -62,9 +62,3 @@ class GameHub:
 
     def subscribe_game_removed(self, key) -> asyncio.Event:
         return self.removed[key]
-
-    def finalize(self):
-        for k in self.created:
-            #makes each general_handler no longer wait for game creation
-            #this is a quick and very dirty solution to handling the end of tournament situation
-            self.created[k].set()
