@@ -1,7 +1,7 @@
 import asyncio
 from abc import ABC, abstractmethod
 
-class Game(ABC):
+class Game(): #(ABC):
     def __init__(self, player1: str, player2: str):
         self.player1_key  = player1
         self.player2_key  = player2
@@ -16,20 +16,23 @@ class Game(ABC):
         self.is_turn_events[player1].set()
 
 
-    @abstractmethod
+    # @abstractmethod
     def __interpret_message(self, key: str, message: dict) -> dict:
-        return {}
+        return {"type": "state", "turn": key, "echo": str(message)}
 
-    @abstractmethod
+    # @abstractmethod
     def get_start_state(self) -> dict:
-        return {}
+        return {"type": "state", "turn": self.player1_key}
 
-    def play(self, key, message) -> dict:
+    async def play(self, key, message) -> dict:
         response = self.__interpret_message(key, message)
 
         #set the turn start/end events
         self.is_turn_events[key].clear()
         self.is_turn_events[self.__get_opponent_key(key)].set()
+
+        #can remove...
+        await asyncio.sleep(0.1)
         return response
 
     def is_finished(self) -> bool:

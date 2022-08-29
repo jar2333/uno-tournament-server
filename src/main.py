@@ -8,7 +8,7 @@ import json
 from json.decoder import JSONDecodeError
 
 from round_robin import get_schedule
-from parsing import is_valid_message
+from parsing import is_valid_message, is_valid_init_message, has_valid_key
 
 from registry import Registry
 from game_hub import GameHub
@@ -17,7 +17,8 @@ from game_hub import GameHub
 """
 CONFIG
 """
-TURN_TIMEOUT_IN_SECONDS = 15.0
+TURN_TIMEOUT_IN_SECONDS = 60.0
+TIME_UNTIL_TOURNAMENT = 30.0
 
 """
 PERMISSIBLE KEYS
@@ -40,28 +41,16 @@ CURRENT GAMES
 """
 GAMES = GameHub()
 
-TOURNAMENT_IS_OVER_EVENT = asyncio.Event()
-
 """
 WEBSOCKETS SERVER LOGIC
 """
-def is_valid_init_message(msg):
-    return 'type' in msg and msg['type'] == 'init' and 'key' in msg
-
-def has_valid_key(msg):
-    key = msg['key']
-    return key in KEYS and not REGISTRY.is_registered(key)
-
 #handles any subsequent messages (and publishes messages as well)
 async def general_handler(key, websocket):
-    while not TOURNAMENT_IS_OVER_EVENT.is_set():
+    while True:
         #wait until new game for key is created
         print(f"Player {key} waiting for game...")
         game_created_event = GAMES.subscribe_game_created(key)
         await game_created_event.wait()
-
-        if TOURNAMENT_IS_OVER_EVENT.is_set():
-            return
 
         #Get game and send the current (init) state to the client.
         #This is the indication that they can start sending messages.
@@ -69,13 +58,14 @@ async def general_handler(key, websocket):
         if game is None: #shouldn't happen, but just in case it does...
             continue
         print(f"Game found! Players: ({game.player1_key},{game.player2_key})")
-        websocket.send(json.dumps(game.get_start_state()))
+        await websocket.send(json.dumps(game.get_start_state()))
 
         while not game.is_finished():
 
             #wait until it is this player's turn to start reading.
             #this has the added bonus that if the client message was not processed
             #successfully, this will still be set() (nonblocking), so it will try again
+            print(f"Player {key} waiting for their turn.")
             is_turn_event = game.subscribe_is_turn(key)
             await is_turn_event.wait()
 
@@ -84,43 +74,52 @@ async def general_handler(key, websocket):
             if game.is_finished():
                 break
 
+            print(f"Reading player {key} input.")
             #WEBSOCKET MESSAGE READING/PARSING LOOP
             start_time = time.time()
             time_elapsed = 0
             while True:
                 time_elapsed = time.time() - start_time
                 time_remaining = TURN_TIMEOUT_IN_SECONDS - time_elapsed
+                print(time_remaining)
                 #try receiving json from client
                 try:
                     #receive from websocket
-                    text = asyncio.wait_for(websocket.recv(), timeout=time_remaining)
+                    text = await asyncio.wait_for(websocket.recv(), timeout=time_remaining)
+                    print(f"Received input from player {key}")
 
                     #parse json into message
                     message = json.loads(text)
 
                     #continue parsing if message is not valid
                     if not is_valid_message(message):
+                        print(f"Invalid message sent by {key}")
                         continue
 
                     #Game can either end turn here or finish entirely.
-                    response = game.play(key, message)
+                    response = await game.play(key, message)
 
                     #send response to client
                     await websocket.send(json.dumps(response))
+
+                    #SEND RESPONSE TO OTHER CLIENT TOO! (facilitating callbacks instead of polling)
 
                     #break out of parsing loop
                     break
                 except asyncio.TimeoutError:
                     #make the player lose!
+                    print(f"Player {key} timed out, and lose the game.")
                     game.forfeit(key)
                     break
                 except websockets.ConnectionClosed:
                     #make the player lose AND disqualify them
+                    print(f"Player {key} disconnected. They lose the game and get disqualified.")
                     game.forfeit(key)
                     REGISTRY.disqualify_player(key)
                     break
                 except JSONDecodeError:
                     #malformed json is skipped
+                    print(f"Invalid JSON sent by {key}")
                     continue  
 
         #Past while loop, game is finished
@@ -138,7 +137,7 @@ async def init_handler(websocket):
         msg = json.loads(await websocket.recv())
         print(f"msg received: {msg}")
 
-        if is_valid_init_message(msg) and has_valid_key(msg):
+        if is_valid_init_message(msg) and has_valid_key(msg, KEYS, REGISTRY):
             key = msg['key']
 
             #register player
@@ -146,6 +145,8 @@ async def init_handler(websocket):
             REGISTRY.register_player(key)
 
             #sleep until tournament starts
+            print(f"Player {key} waiting until tournament start.")
+            await asyncio.sleep(TIME_UNTIL_TOURNAMENT)
 
             #handle further messages from this socket
             await general_handler(key, websocket)
@@ -162,7 +163,7 @@ async def init_handler(websocket):
 #starts websockets server
 async def main():
     async with websockets.serve(init_handler, '', 8001):
-        await TOURNAMENT_IS_OVER_EVENT.wait()
+        await asyncio.Future()
 
 """
 MATCHMAKING AND GAME SIMULATION LOGIC
@@ -188,6 +189,7 @@ async def play_game(key_pair):
 
     #Get winner of game
     winner = game.get_winner() 
+    print(f"Game winner: {winner}")
 
     #remove game from hub
     GAMES.remove_game(player1, player2)
@@ -195,9 +197,8 @@ async def play_game(key_pair):
     return winner
 
 async def match_make():
-    global TOURNAMENT_IS_OVER
     #sleep until tournament start
-    r = 24
+    r = int(TIME_UNTIL_TOURNAMENT // 5)
     for i in range(r):
         print(f"{(5*r) - (i*5)} seconds remain until tournament start.")
         await asyncio.sleep(5)
@@ -222,9 +223,10 @@ async def match_make():
             print(f"The {i}th game was won by {key}")
             REGISTRY.record_win(key)
 
+    #exit program
     print("All games played. Ending...")
-    TOURNAMENT_IS_OVER_EVENT.set() #makes all coroutines spawned by websocket server end
-    GAMES.finalize()
+    print(f"Scores: {REGISTRY.get_registered()}")
+    exit(0)
 
 """
 MAIN SCRIPT
@@ -235,7 +237,9 @@ if __name__ == '__main__':
     print(KEYS)
 
     #run websockets server and match_making
-    asyncio.run(asyncio.gather(
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(asyncio.gather(
         main(),
         match_make()
     ))
+    loop.close()
