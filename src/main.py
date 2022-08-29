@@ -41,6 +41,8 @@ CURRENT GAMES
 """
 GAMES = GameHub()
 
+TOURNAMENT_STARTED = False
+
 """
 WEBSOCKETS SERVER LOGIC
 """
@@ -166,8 +168,16 @@ async def init_handler(websocket):
         await websocket.close(code=1003, reason=str(e))
 
     except websockets.ConnectionClosed:
-        if not key is None and REGISTRY.is_registered(key):
-            REGISTRY.unregister_player(key)
+        print(f"player {key} disconnected")
+        if TOURNAMENT_STARTED:
+            game = GAMES.get_game(key)
+            if not game is None:
+                game.forfeit(key)
+                REGISTRY.disqualify_player(key)
+        elif not key is None and REGISTRY.is_registered(key):
+                REGISTRY.unregister_player(key)
+
+
 
 #starts websockets server
 async def main():
@@ -206,6 +216,8 @@ async def play_game(key_pair):
     return winner
 
 async def match_make():
+    global TOURNAMENT_STARTED
+    
     #sleep until tournament start
     r = int(TIME_UNTIL_TOURNAMENT // 5)
     for i in range(r):
@@ -214,6 +226,7 @@ async def match_make():
 
     #make round robin schedule
     schedule = get_schedule(REGISTRY.get_registered())
+    TOURNAMENT_STARTED = True
     print("Round-robin schedule:")
     for round in schedule:
         print(round)
