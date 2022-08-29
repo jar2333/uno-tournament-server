@@ -14,7 +14,7 @@ class Game(ABC):
 
 
     @abstractmethod
-    def __interpret_message(self, message) -> dict:
+    def __interpret_message(self, key, message) -> dict:
         return {}
 
     @abstractmethod
@@ -22,7 +22,7 @@ class Game(ABC):
         return {}
 
     def play(self, key, message) -> dict:
-        response = self.__interpret_message(message)
+        response = self.__interpret_message(key, message)
 
         #set the turn start/end events
         self.is_turn_events[key].clear()
