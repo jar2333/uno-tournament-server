@@ -24,16 +24,13 @@ class Game(): #(ABC):
     def get_state(self) -> dict:
         return {}
 
-    async def play(self, key, message) -> bool:
+    def play(self, key, message) -> bool:
         is_valid = self.interpret_message(key, message)
 
         if is_valid:
             #set the turn start/end events
             self.is_turn_events[key].clear()
             self.is_turn_events[self.__get_opponent_key(key)].set()
-
-            #can remove...
-            await asyncio.sleep(0.1)
 
         return is_valid
 

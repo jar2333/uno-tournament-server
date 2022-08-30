@@ -106,7 +106,7 @@ async def general_handler(key, websocket):
                     message = json.loads(text)
 
                     #Game can either end turn here or finish entirely.
-                    is_valid = await game.play(key, message)
+                    is_valid = game.play(key, message)
 
                     #message was not actionable
                     if not is_valid:
