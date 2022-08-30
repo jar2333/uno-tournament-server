@@ -17,23 +17,25 @@ class Game(): #(ABC):
 
 
     @abstractmethod
-    def interpret_message(self, key: str, message: dict) -> dict:
+    def interpret_message(self, key: str, message: dict) -> bool: #is_valid_move
         return {}
 
     @abstractmethod
     def get_state(self) -> dict:
         return {}
 
-    async def play(self, key, message) -> dict:
-        response = self.interpret_message(key, message)
+    async def play(self, key, message) -> bool:
+        is_valid = self.interpret_message(key, message)
 
-        #set the turn start/end events
-        self.is_turn_events[key].clear()
-        self.is_turn_events[self.__get_opponent_key(key)].set()
+        if is_valid:
+            #set the turn start/end events
+            self.is_turn_events[key].clear()
+            self.is_turn_events[self.__get_opponent_key(key)].set()
 
-        #can remove...
-        await asyncio.sleep(0.1)
-        return response
+            #can remove...
+            await asyncio.sleep(0.1)
+
+        return is_valid
 
     def is_finished(self) -> bool:
         return self.is_finished_event.is_set()
