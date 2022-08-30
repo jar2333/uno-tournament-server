@@ -3,6 +3,7 @@ import sched
 import time
 from urllib.parse import non_hierarchical
 from winreg import REG_SZ
+from xml.dom.domreg import registered
 import websockets
 
 import json
@@ -19,7 +20,7 @@ from game_hub import GameHub
 CONFIG
 """
 TURN_TIMEOUT_IN_SECONDS = 60.0
-TIME_UNTIL_TOURNAMENT = 30.0
+TIME_UNTIL_TOURNAMENT = 25.0
 
 """
 PERMISSIBLE KEYS
@@ -228,7 +229,9 @@ async def match_make():
         await asyncio.sleep(5)
 
     #make round robin schedule
-    schedule = get_schedule(REGISTRY.get_registered())
+    registered = list(REGISTRY.get_registered())
+    schedule = get_schedule(registered)
+
     TOURNAMENT_STARTED = True
     print("Round-robin schedule:")
     for round in schedule:
