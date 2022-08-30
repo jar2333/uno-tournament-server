@@ -9,7 +9,7 @@ import json
 from json.decoder import JSONDecodeError
 
 from round_robin import get_schedule
-from messages import is_valid_init_message, has_valid_key, START_TURN_MESSAGE, ENDED_TURN_MESSAGE, START_GAME_MESSAGE, ENDED_GAME_MESSAGE, INVALID_MOVE_MESSAGE
+from messages import is_valid_init_message, has_valid_key, create_state_message, START_TURN_MESSAGE, ENDED_TURN_MESSAGE, START_GAME_MESSAGE, ENDED_GAME_MESSAGE, INVALID_MOVE_MESSAGE
 
 from registry import Registry
 from game_hub import GameHub
@@ -105,16 +105,17 @@ async def general_handler(key, websocket):
                     message = json.loads(text)
 
                     #Game can either end turn here or finish entirely.
-                    response = await game.play(key, message)
+                    is_valid = await game.play(key, message)
 
                     #message was not actionable
-                    if response is None:
+                    if not is_valid:
                         print(f"Invalid message sent by {key}")
                         await websocket.send(json.dumps(INVALID_MOVE_MESSAGE))
                         continue
 
-                    #send game response to client
-                    await websocket.send(json.dumps(response))
+                    #send game state response to client
+                    game_state = game.get_state()
+                    await websocket.send(json.dumps(create_state_message(game_state)))
 
                     #break out of parsing loop
                     break
