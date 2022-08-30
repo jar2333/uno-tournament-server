@@ -10,7 +10,7 @@ class UnoGame(Game):
         self.player2_hand = []
 
     def interpret_message(self, key: str, message: dict) -> dict:
-        return {"type": "state", "turn": key, "echo": str(message)}
+        return {}
 
-    def get_start_state(self) -> dict:
-        return {"type": "state", "turn": self.player1_key}
+    def get_state(self) -> dict:
+        return {}

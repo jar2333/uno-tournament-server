@@ -1,6 +1,7 @@
 import asyncio
 import sched
 import time
+from urllib.parse import non_hierarchical
 from winreg import REG_SZ
 import websockets
 
@@ -8,7 +9,7 @@ import json
 from json.decoder import JSONDecodeError
 
 from round_robin import get_schedule
-from messages import is_valid_message, is_valid_init_message, has_valid_key, START_TURN_MESSAGE
+from messages import is_valid_init_message, has_valid_key, START_TURN_MESSAGE, ENDED_TURN_MESSAGE, START_GAME_MESSAGE, ENDED_GAME_MESSAGE, INVALID_MOVE_MESSAGE
 
 from registry import Registry
 from game_hub import GameHub
@@ -66,7 +67,8 @@ async def general_handler(key, websocket):
         print(f"Game found! Players: ({game.player1_key},{game.player2_key})")
 
         #send the start state of the game
-        await websocket.send(json.dumps(game.get_start_state()))
+        await websocket.send(json.dumps(START_GAME_MESSAGE))
+        await websocket.send(json.dumps(game.get_state()))
 
         while not game.is_finished():
 
@@ -102,15 +104,16 @@ async def general_handler(key, websocket):
                     #parse json into message
                     message = json.loads(text)
 
-                    #continue parsing if message is not valid
-                    if not is_valid_message(message):
-                        print(f"Invalid message sent by {key}")
-                        continue
-
                     #Game can either end turn here or finish entirely.
                     response = await game.play(key, message)
 
-                    #send response to client
+                    #message was not actionable
+                    if response is None:
+                        print(f"Invalid message sent by {key}")
+                        await websocket.send(json.dumps(INVALID_MOVE_MESSAGE))
+                        continue
+
+                    #send game response to client
                     await websocket.send(json.dumps(response))
 
                     #break out of parsing loop
@@ -124,6 +127,12 @@ async def general_handler(key, websocket):
                     #malformed json is skipped
                     print(f"Invalid JSON sent by {key}")
                     continue  
+
+            #send message that turn has ended
+            await websocket.send(json.dumps(ENDED_TURN_MESSAGE))
+
+        #send message indicating turn has ended
+        await websocket.send(json.dumps(ENDED_GAME_MESSAGE))
 
         #Past while loop, game is finished
         #wait for game to be removed from GameHub 

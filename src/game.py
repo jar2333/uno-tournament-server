@@ -21,7 +21,7 @@ class Game(): #(ABC):
         return {}
 
     @abstractmethod
-    def get_start_state(self) -> dict:
+    def get_state(self) -> dict:
         return {}
 
     async def play(self, key, message) -> dict:
