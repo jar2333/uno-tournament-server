@@ -1,7 +1,7 @@
 import asyncio
 from abc import ABC, abstractmethod
 
-class Game(): #(ABC):
+class Game(ABC):
     def __init__(self, player1: str, player2: str):
         self.player1_key  = player1
         self.player2_key  = player2
