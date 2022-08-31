@@ -14,8 +14,11 @@ class DebugGame(Game):
     def __init__(self, p1: str, p2: str):
         super().__init__(p1, p2)
 
-    def interpret_message(self, key: str, message: dict) -> bool:
-        return is_valid_debug_message(message)
+    def interpret_message(self, key: str, message: dict):
+        pass
 
     def get_state(self) -> dict:
         return {"turn": self.player1_key}
+
+    def is_valid_message(self, message: dict) -> bool:
+        return is_valid_debug_message(message)

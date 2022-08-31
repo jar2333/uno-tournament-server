@@ -17,17 +17,22 @@ class Game(): #(ABC):
 
 
     @abstractmethod
-    def interpret_message(self, key: str, message: dict) -> bool: #is_valid_move
-        return {}
+    def interpret_message(self, key: str, message: dict) -> None: #is_valid_move
+        pass
 
     @abstractmethod
     def get_state(self) -> dict:
         return {}
 
+    @abstractmethod
+    def is_valid_message(self, message: dict) -> bool:
+        return True
+
     def play(self, key, message) -> bool:
-        is_valid = self.interpret_message(key, message)
+        is_valid = self.is_valid_message(message)
 
         if is_valid:
+            self.interpret_message(key, message)
             #set the turn start/end events
             self.is_turn_events[key].clear()
             self.is_turn_events[self.__get_opponent_key(key)].set()

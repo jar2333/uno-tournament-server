@@ -9,8 +9,11 @@ class UnoGame(Game):
         self.player1_hand = []
         self.player2_hand = []
 
-    def interpret_message(self, key: str, message: dict) -> bool:
-        return True
+    def interpret_message(self, key: str, message: dict):
+        pass
 
     def get_state(self) -> dict:
         return {}
+
+    def is_valid_message(self, message: dict) -> bool:
+        return super().is_valid_message(message)
