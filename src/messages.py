@@ -13,6 +13,7 @@ START_TURN_MESSAGE   = {"type": "turn_start"}
 ENDED_TURN_MESSAGE   = {"type": "turn_ended"}
 VALID_MOVE_MESSAGE   = {"type": "valid_move"}
 INVALID_MOVE_MESSAGE = {"type": "invalid_move"}
+READING_MOVE_MESSAGE = {"type": "reading_move"}
 
 
 WIN_MESSAGE  = {"type": "win"}

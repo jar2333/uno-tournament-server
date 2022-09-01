@@ -51,12 +51,14 @@ def parse(msg):
         case {'type': 'play', 'index': i}:
             pass
 
-        case {'type': ''}:
+        case {'type': 'challenge'}:
+            pass
+
+        case {'type': 'uno'}:
             pass
 
         case _:
             pass
-
 
     return (None, False)
             

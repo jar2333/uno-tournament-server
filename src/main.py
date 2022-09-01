@@ -10,7 +10,7 @@ import json
 from json.decoder import JSONDecodeError
 
 from round_robin import get_schedule
-from messages import is_valid_init_message, has_valid_key, create_state_message, START_TURN_MESSAGE, ENDED_TURN_MESSAGE, START_GAME_MESSAGE, ENDED_GAME_MESSAGE, INVALID_MOVE_MESSAGE, VALID_MOVE_MESSAGE
+from messages import is_valid_init_message, has_valid_key, create_state_message, START_TURN_MESSAGE, ENDED_TURN_MESSAGE, START_GAME_MESSAGE, ENDED_GAME_MESSAGE, INVALID_MOVE_MESSAGE, VALID_MOVE_MESSAGE, READING_MOVE_MESSAGE
 
 from registry import Registry
 from game_hub import GameHub
@@ -93,6 +93,9 @@ async def general_handler(key, websocket):
             start_time = time.time()
             time_elapsed = 0
             while True:
+                #send message indicating that input is being read
+                await websocket.send(json.dumps(READING_MOVE_MESSAGE))
+
                 time_elapsed = time.time() - start_time
                 time_remaining = TURN_TIMEOUT_IN_SECONDS - time_elapsed
                 print(time_remaining)
