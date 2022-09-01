@@ -35,13 +35,30 @@ class UnoGame(Game):
                 break
 
         #a bunch of flags used for implementing game rules
+        self.has_drawn = {self.player1_key: False, self.player2_key: False}
+
+        #for +4 challenges
+        self.hand_revealed = False
 
     def interpret_message(self, key: str, message: dict):
         hand = self.hands[key]
         opponent_key = self.get_opponent_key(key)
         match message:
             case {'type': 'draw'}:
-                pass
+                if not self.has_drawn[key]:
+                    card = self.__draw_card(key)
+
+                    #if drawn card can be played, it must
+                    if self.__is_valid(card):
+                        #hence, turn doesn't end, and we must note the drawn card
+                        self.has_drawn[key] = True
+                        return False
+
+                    #otherwise, turn ends
+                    return True
+
+                #drawn card must be played
+                return None
 
             case {'type': 'play', 'index': index}:
                 pass
@@ -49,6 +66,11 @@ class UnoGame(Game):
             case {'type': 'play', 'index': index, "color": chosen_color}:
                 try:
                     i = int(index)
+
+                    #must play drawn card if a card was drawn this turn
+                    if self.has_drawn[key] and i != len(hand)-1:
+                        return None
+
                     card = hand[i]
 
                     if not self.__is_valid(card):
@@ -79,6 +101,8 @@ class UnoGame(Game):
 
                         return False
 
+                    #End of turn, reset flag
+                    self.has_drawn[key] = False
                     return True
 
                 except:
@@ -102,7 +126,8 @@ class UnoGame(Game):
         opponent_key = self.get_opponent_key(key)
         opponent_hand_size = len(self.hands[opponent_key])
 
-        return {"player_hand": self.hands[key], "discard": d, "opponent_hand_size": opponent_hand_size}
+        #Prompt fields says if a specific action is requested
+        return {"player_hand": self.hands[key], "discard": d, "opponent_hand_size": opponent_hand_size, "prompt": None}
 
     def __is_valid(self, card):
         number, color = card
@@ -114,13 +139,10 @@ class UnoGame(Game):
 
         return False
 
-    # def __evaluate_action(self, key, card):
-    #     #evaluate effect of action cards
-    #     pass
-
     def __draw_card(key):
         #draw 1 from draw_pile and cycle discard if necessary
-        pass
+        #return drawn
+        return ("", "")
 
 
 def make_deck():
