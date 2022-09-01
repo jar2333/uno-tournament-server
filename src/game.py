@@ -35,7 +35,7 @@ class Game(ABC):
         if turn_ended:
             #set the turn start/end events
             self.is_turn_events[key].clear()
-            self.is_turn_events[self.__get_opponent_key(key)].set()
+            self.is_turn_events[self.get_opponent_key(key)].set()
 
         return turn_ended
 
@@ -46,7 +46,7 @@ class Game(ABC):
         return self.winner
 
     def forfeit(self, key):
-        self.set_winner(self.__get_opponent_key(key))
+        self.set_winner(self.get_opponent_key(key))
 
     def subscribe_is_turn(self, player_key) -> asyncio.Event:
         return self.is_turn_events[player_key]
@@ -60,7 +60,7 @@ class Game(ABC):
         for k in self.is_turn_events:
             self.is_turn_events[k].set() #no longer block for both players
 
-    def __get_opponent_key(self, key):
+    def get_opponent_key(self, key):
         if key == self.player1_key:
             return self.player2_key
         else:
