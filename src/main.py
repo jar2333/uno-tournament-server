@@ -87,6 +87,7 @@ async def general_handler(key, websocket):
 
             #send message that turn has started
             await websocket.send(json.dumps(START_TURN_MESSAGE))
+            game.start_turn(key)
 
             print(f"Reading player {key} input.")
             #WEBSOCKET MESSAGE READING/PARSING LOOP

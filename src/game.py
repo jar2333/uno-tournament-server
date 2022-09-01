@@ -30,6 +30,10 @@ class Game(ABC):
     def get_state(self, key: str) -> dict:
         return {}
 
+    @abstractmethod
+    def start_turn(self, key: str):
+        pass
+
     def play(self, key, message) -> bool:
         turn_ended = self.interpret_message(key, message)
 

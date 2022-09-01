@@ -47,6 +47,10 @@ class UnoGame(Game):
         self.challenge_offered = False
 
         #if uno was called
+        self.did_call_uno = {self.player1_key: False, self.player2_key: False}
+
+    def start_turn(self, key: str):
+        self.did_call_uno[key] = False
 
     def interpret_message(self, key: str, message: dict):
         hand = self.hands[key]
@@ -81,6 +85,7 @@ class UnoGame(Game):
 
                     if not self.__is_valid(card):
                         return None
+
 
                     number, color = card
 
@@ -202,8 +207,13 @@ class UnoGame(Game):
                 self.has_drawn = False
                 return True #turn ends, because this only happens if wild/+4 card played :)
 
-            # case {'type': 'uno'}:
-            #     pass
+            case {'type': 'uno'}:
+                if not self.did_call_uno[opponent_key] and len(self.hands[opponent_key]) == 1:
+                    for i in range(4):
+                        self.__draw_card(opponent_key)
+
+                self.did_call_uno[key] = True
+                return False
 
             case _:
                 return None
@@ -218,7 +228,7 @@ class UnoGame(Game):
         opponent_hand_size = len(self.hands[opponent_key])
 
         #Prompt fields says if a specific action is requested
-        state = {"player_hand": self.hands[key], "discard": d, "opponent_hand_size": opponent_hand_size, "prompt": None}
+        state = {"player_hand": self.hands[key], "discard": d, "opponent_hand_size": opponent_hand_size, "prompt": None, "uno": None}
         if self.color_requested:
             state['prompt'] = 'color'
         elif self.challenge_offered:
@@ -227,6 +237,12 @@ class UnoGame(Game):
         if self.hand_revealed:
             state['opponent_hand'] = self.hands[opponent_key]
             self.hand_revealed = False
+
+        if opponent_hand_size == 1:
+            if self.did_call_uno[opponent_key]:
+                state['uno'] = True
+            else:
+                state['uno'] = False
 
         return state
 
