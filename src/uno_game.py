@@ -44,7 +44,7 @@ class UnoGame(Game):
         self.color_requested = False
 
         #if challenge is offered
-        self.challenge_offered = False
+        self.challenge_offered = False #{self.player1_key: False, self.player2_key: False}
 
         #if uno was called
 
@@ -53,7 +53,7 @@ class UnoGame(Game):
         opponent_key = self.get_opponent_key(key)
         match message:
             case {'type': 'draw'}:
-                if self.color_requested or self.has_drawn[key]: #drawn card must be played
+                if self.color_requested or self.challenge_offered or self.has_drawn[key]: #drawn card must be played
                     return None
 
                 card = self.__draw_card(key)
@@ -68,7 +68,7 @@ class UnoGame(Game):
                 return True
 
             case {'type': 'play', 'index': index}:
-                if self.color_requested:
+                if self.color_requested or self.challenge_offered:
                     return None
                 try:
                     i = int(index)
@@ -92,13 +92,10 @@ class UnoGame(Game):
 
                     self.hands[key].pop(i)
 
-                    if number in ["skip", "reverse", "+2", "+4"]:
+                    if number in ["skip", "reverse", "+2"]:
                         match number:
                             case "+2":
                                 for i in range(2):
-                                    self.__draw_card(opponent_key)
-                            case "+4":
-                                for i in range(4):
                                     self.__draw_card(opponent_key)
                             case _:
                                 pass
@@ -113,7 +110,7 @@ class UnoGame(Game):
                     return None
 
             case {'type': 'play', 'index': index, 'color': chosen_color}:
-                if self.color_requested: #must be in standalone 'color' message
+                if self.color_requested or self.challenge_offered: #must be in standalone 'color' message
                     return None
                 try:
                     i = int(index)
@@ -145,8 +142,9 @@ class UnoGame(Game):
                                 for i in range(2):
                                     self.__draw_card(opponent_key)
                             case "+4":
-                                for i in range(4):
-                                    self.__draw_card(opponent_key)
+                                #+4 played, so challenge offered. This ends the turn as well, to allow for challenge.
+                                self.challenge_offered = True
+                                return True
                             case _:
                                 pass
 
@@ -160,17 +158,44 @@ class UnoGame(Game):
                     return None
 
             case {'type': 'challenge', 'challenge': did_challenge}:
-                pass
+                if not self.challenge_offered:
+                    return None
+
+                self.challenge_offered = False
+
+                if did_challenge: #hand is revealed
+                    self.hand_revealed = True
+                    for card in self.hands[opponent_key]:
+                        if self.__is_valid(card) and card != ("+4", "colorless"): 
+                            #if there was a non +4 card that couldve been played
+                            #challenge won, opponent draws 4, turn continues
+                            for i in range(4):
+                                self.__draw_card(opponent_key)
+                            return False
+                    #challenge lost, player draws 6, turn ends
+                    for i in range(6):
+                        self.__draw_card(key)
+                    return True
+
+                else:
+                    #draw 4 and end turn
+                    for i in range(4):
+                        self.__draw_card(key)
+                    return True
 
             case {'type': 'color', 'color': chosen_color}:
-                if (not self.color_requested) or (not chosen_color in COLORS):
+                if self.challenge_offered or (not self.color_requested) or (not chosen_color in COLORS):
                     return None
                 
-                number, color = self.discard_pile[-1]
+                number, _ = self.discard_pile[-1]
                 self.discard_pile[-1] = (number, chosen_color)
                 self.color_requested = False
 
-                return True #turn ends, because this only happens if wild card played :)
+                #if the card was a +4, challenge is available to opponent.
+                if number == "+4":
+                    self.challenge_offered = True
+
+                return True #turn ends, because this only happens if wild/+4 card played :)
 
             # case {'type': 'uno'}:
             #     pass
@@ -191,6 +216,12 @@ class UnoGame(Game):
         state = {"player_hand": self.hands[key], "discard": d, "opponent_hand_size": opponent_hand_size, "prompt": None}
         if self.color_requested:
             state['prompt'] = 'color'
+        elif self.challenge_offered:
+            state['prompt'] = 'challenge'
+
+        if self.hand_revealed:
+            state['opponent_hand'] = self.hands[opponent_key]
+            self.hand_revealed = False
 
         return state
 
