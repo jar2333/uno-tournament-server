@@ -69,7 +69,7 @@ async def general_handler(key, websocket):
 
         #send the start state of the game
         await websocket.send(json.dumps(START_GAME_MESSAGE))
-        await websocket.send(json.dumps(game.get_state(key)))
+        # await websocket.send(json.dumps(game.get_state(key)))
 
         while not game.is_finished():
 
@@ -87,6 +87,7 @@ async def general_handler(key, websocket):
 
             #send message that turn has started
             await websocket.send(json.dumps(START_TURN_MESSAGE))
+            await websocket.send(json.dumps(game.get_state(key)))
 
             print(f"Reading player {key} input.")
             #WEBSOCKET MESSAGE READING/PARSING LOOP
