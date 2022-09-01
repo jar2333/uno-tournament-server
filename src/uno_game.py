@@ -35,7 +35,7 @@ class UnoGame(Game):
                 break
 
         #a bunch of flags used for implementing game rules
-        self.has_drawn = {self.player1_key: False, self.player2_key: False}
+        self.has_drawn = False
 
         #for +4 challenges
         self.hand_revealed = False
@@ -44,7 +44,7 @@ class UnoGame(Game):
         self.color_requested = False
 
         #if challenge is offered
-        self.challenge_offered = False #{self.player1_key: False, self.player2_key: False}
+        self.challenge_offered = False
 
         #if uno was called
 
@@ -53,7 +53,7 @@ class UnoGame(Game):
         opponent_key = self.get_opponent_key(key)
         match message:
             case {'type': 'draw'}:
-                if self.color_requested or self.challenge_offered or self.has_drawn[key]: #drawn card must be played
+                if self.color_requested or self.challenge_offered or self.has_drawn: #drawn card must be played
                     return None
 
                 card = self.__draw_card(key)
@@ -61,7 +61,7 @@ class UnoGame(Game):
                 #if drawn card can be played, it must
                 if self.__is_valid(card):
                     #hence, turn doesn't end, and we must note the drawn card
-                    self.has_drawn[key] = True
+                    self.has_drawn = True
                     return False
 
                 #otherwise, turn ends
@@ -74,7 +74,7 @@ class UnoGame(Game):
                     i = int(index)
 
                     #must play drawn card if a card was drawn this turn
-                    if self.has_drawn[key] and i != len(hand)-1:
+                    if self.has_drawn and i != len(hand)-1:
                         return None
 
                     card = hand[i]
@@ -103,7 +103,7 @@ class UnoGame(Game):
                         return False
 
                     #End of turn, reset flag
-                    self.has_drawn[key] = False
+                    self.has_drawn = False
                     return True
 
                 except:
@@ -116,7 +116,7 @@ class UnoGame(Game):
                     i = int(index)
 
                     #must play drawn card if a card was drawn this turn
-                    if self.has_drawn[key] and i != len(hand)-1:
+                    if self.has_drawn and i != len(hand)-1:
                         return None
 
                     card = hand[i]
@@ -151,7 +151,7 @@ class UnoGame(Game):
                         return False
 
                     #End of turn, reset flag
-                    self.has_drawn[key] = False
+                    self.has_drawn = False
                     return True
 
                 except:
@@ -236,7 +236,8 @@ class UnoGame(Game):
         return False
 
     def __draw_card(key):
-        #draw 1 from draw_pile and cycle discard if necessary
+        #draw 1 from draw_pile and reshuffle discard if necessary
+        #make sure to reset all wild and +4 to colorless
         #return drawn
         return ("", "")
 
