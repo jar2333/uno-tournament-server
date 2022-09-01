@@ -10,17 +10,29 @@ class UnoGame(Game):
     def __init__(self, p1: str, p2: str):
         super().__init__(p1, p2)
 
+        #make deck, fill and shuffle draw pile
         self.draw_pile = make_deck()
         shuffle(self.draw_pile)
 
+        #initialize hands
         self.hands = {self.player1_key: [], self.player2_key: []}
         
+        #draw initial cards to hands
         for key in self.hands:
             for i in range(7):
                 card = self.draw_pile.pop()
                 self.hands[key].append(card)
 
+        #initialize discard pile
         self.discard_pile = []
+        while True:
+            card = self.draw_pile.pop()
+            number, color = card
+            if number in ["wild", "+4"]:
+                self.draw_pile = [card] + self.draw_pile
+            else:
+                self.discard_pile.append(card)
+                break
 
         #a bunch of flags used for implementing game rules
 
@@ -64,7 +76,7 @@ class UnoGame(Game):
                                     self.__draw_card(opponent_key)
                             case _:
                                 pass
-                            
+
                         return False
 
                     return True
