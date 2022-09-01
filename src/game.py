@@ -17,6 +17,7 @@ class Game(ABC):
         self.is_turn_events[player1].set()
 
     """
+    returns None if failed, whether turn ended if it succeded
     None:  invalid message
     False: valid message, turn NOT ended
     True:  valid message, turn ended

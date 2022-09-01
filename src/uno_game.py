@@ -59,13 +59,13 @@ class UnoGame(Game):
                             case "+2":
                                 for i in range(2):
                                     self.__draw_card(opponent_key)
-                                return False
                             case "+4":
                                 for i in range(4):
                                     self.__draw_card(opponent_key)
-                                return False
                             case _:
-                                return False
+                                pass
+                            
+                        return False
 
                     return True
 
