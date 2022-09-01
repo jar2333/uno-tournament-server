@@ -144,6 +144,7 @@ class UnoGame(Game):
                             case "+4":
                                 #+4 played, so challenge offered. This ends the turn as well, to allow for challenge.
                                 self.challenge_offered = True
+                                self.has_drawn = False
                                 return True
                             case _:
                                 pass
@@ -175,12 +176,15 @@ class UnoGame(Game):
                     #challenge lost, player draws 6, turn ends
                     for i in range(6):
                         self.__draw_card(key)
+                    self.has_drawn = False
                     return True
 
                 else:
                     #draw 4 and end turn
                     for i in range(4):
                         self.__draw_card(key)
+                        
+                    self.has_drawn = False
                     return True
 
             case {'type': 'color', 'color': chosen_color}:
@@ -195,6 +199,7 @@ class UnoGame(Game):
                 if number == "+4":
                     self.challenge_offered = True
 
+                self.has_drawn = False
                 return True #turn ends, because this only happens if wild/+4 card played :)
 
             # case {'type': 'uno'}:
