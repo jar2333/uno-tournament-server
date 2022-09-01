@@ -251,7 +251,7 @@ class UnoGame(Game):
         
         discard_number, discard_color = self.discard_pile[-1]
 
-        if number == discard_number or color == discard_color or number == "wild":
+        if number == discard_number or color == discard_color or number in ["wild", "+4"]:
             return True
 
         return False
