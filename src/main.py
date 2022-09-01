@@ -87,7 +87,6 @@ async def general_handler(key, websocket):
 
             #send message that turn has started
             await websocket.send(json.dumps(START_TURN_MESSAGE))
-            await websocket.send(json.dumps(create_state_message(game.get_state(key))))
 
             print(f"Reading player {key} input.")
             #WEBSOCKET MESSAGE READING/PARSING LOOP
@@ -96,6 +95,7 @@ async def general_handler(key, websocket):
             while True:
                 #send message indicating that input is being read
                 await websocket.send(json.dumps(READING_MOVE_MESSAGE))
+                await websocket.send(json.dumps(create_state_message(game.get_state(key))))
 
                 time_elapsed = time.time() - start_time
                 time_remaining = TURN_TIMEOUT_IN_SECONDS - time_elapsed
