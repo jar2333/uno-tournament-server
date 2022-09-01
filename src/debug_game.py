@@ -17,5 +17,5 @@ class DebugGame(Game):
     def interpret_message(self, key: str, message: dict):
         return None
 
-    def get_state(self) -> dict:
+    def get_state(self, key: str) -> dict:
         return {"turn": self.player1_key}

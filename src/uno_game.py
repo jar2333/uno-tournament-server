@@ -9,23 +9,35 @@ class UnoGame(Game):
         self.draw_pile = make_deck()
         shuffle(self.draw_pile)
 
-        self.player1_hand = []
-        self.player2_hand = []
+        self.hands = {self.player1_key: [], self.player2_key: []}
         
-        for i in range(7):
-            card = self.draw_pile.pop()
-            self.player1_hand.append(card)
-
-        for i in range(7):
-            card = self.draw_pile.pop()
-            self.player2_hand.append(card)
+        for key in self.hands:
+            for i in range(7):
+                card = self.draw_pile.pop()
+                self.hands[key].append(card)
 
         self.discard_pile = []
 
     def interpret_message(self, key: str, message: dict):
-        pass
+        match message:
+            case {'type': 'draw'}:
+                pass
 
-    def get_state(self):
+            case {'type': 'play', 'index': i}:
+                pass
+
+            case {'type': 'challenge'}:
+                pass
+
+            case {'type': 'uno'}:
+                pass
+
+            case _:
+                pass
+
+        return None
+
+    def get_state(self, key: str):
         return {}
 
 def make_deck():
@@ -42,23 +54,4 @@ def make_deck():
                     cards.append((number, color))
     
     return cards
-
-def parse(msg):
-    match msg:
-        case {'type': 'draw'}:
-            pass
-
-        case {'type': 'play', 'index': i}:
-            pass
-
-        case {'type': 'challenge'}:
-            pass
-
-        case {'type': 'uno'}:
-            pass
-
-        case _:
-            pass
-
-    return (None, False)
             

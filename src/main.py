@@ -69,7 +69,7 @@ async def general_handler(key, websocket):
 
         #send the start state of the game
         await websocket.send(json.dumps(START_GAME_MESSAGE))
-        await websocket.send(json.dumps(game.get_state()))
+        await websocket.send(json.dumps(game.get_state(key)))
 
         while not game.is_finished():
 
@@ -120,7 +120,7 @@ async def general_handler(key, websocket):
                     #message was actionable
                     # await websocket.send(json.dumps(VALID_MOVE_MESSAGE))
                     #send game state response to client
-                    game_state = game.get_state()
+                    game_state = game.get_state(key)
                     await websocket.send(json.dumps(create_state_message(game_state)))
 
                     #message did not end turn

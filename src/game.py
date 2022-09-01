@@ -26,7 +26,7 @@ class Game(ABC):
         return None
 
     @abstractmethod
-    def get_state(self) -> dict:
+    def get_state(self, key: str) -> dict:
         return {}
 
     def play(self, key, message) -> bool:
