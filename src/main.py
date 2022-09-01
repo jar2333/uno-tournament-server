@@ -127,6 +127,9 @@ async def general_handler(key, websocket):
                     #message did not end turn
                     if result is False:
                         print(f"Turn was not ended by {key}")
+                        #resets time, can be changed?
+                        start_time = time.time()
+                        time_elapsed = 0
                         continue
 
                     #break out of parsing loop

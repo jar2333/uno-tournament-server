@@ -263,6 +263,9 @@ class UnoGame(Game):
                     break
 
         drawn = self.draw_pile.pop()
+
+        self.hands[key].append(drawn)
+        
         #return drawn
         return drawn
 
