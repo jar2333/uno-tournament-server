@@ -11,7 +11,9 @@ START_GAME_MESSAGE   = {"type": "game_start"}
 ENDED_GAME_MESSAGE   = {"type": "game_ended"}
 START_TURN_MESSAGE   = {"type": "turn_start"}
 ENDED_TURN_MESSAGE   = {"type": "turn_ended"}
+VALID_MOVE_MESSAGE   = {"type": "valid_move"}
 INVALID_MOVE_MESSAGE = {"type": "invalid_move"}
+
 
 WIN_MESSAGE  = {"type": "win"}
 LOSE_MESSAGE = {"type": "lose"}
