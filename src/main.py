@@ -20,7 +20,7 @@ from game_hub import GameHub
 CONFIG
 """
 TURN_TIMEOUT_IN_SECONDS = 60.0
-TIME_UNTIL_TOURNAMENT = 25.0
+TIME_UNTIL_TOURNAMENT = 60.0
 
 """
 PERMISSIBLE KEYS
@@ -87,7 +87,7 @@ async def general_handler(key, websocket):
 
             #send message that turn has started
             await websocket.send(json.dumps(START_TURN_MESSAGE))
-            await websocket.send(json.dumps(game.get_state(key)))
+            await websocket.send(json.dumps(create_state_message(game.get_state(key))))
 
             print(f"Reading player {key} input.")
             #WEBSOCKET MESSAGE READING/PARSING LOOP

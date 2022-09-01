@@ -15,7 +15,7 @@ class DebugGame(Game):
         super().__init__(p1, p2)
 
     def interpret_message(self, key: str, message: dict):
-        return None
+        return is_valid_debug_message(message)
 
     def get_state(self, key: str) -> dict:
         return {"turn": self.player1_key}
