@@ -240,11 +240,31 @@ class UnoGame(Game):
 
         return False
 
-    def __draw_card(key):
+    def __draw_card(self, key):
         #draw 1 from draw_pile and reshuffle discard if necessary
         #make sure to reset all wild and +4 to colorless
+        if len(self.draw_pile) == 0:
+            for c in self.discard_pile:
+                number, color = c
+                if number in ["+4", "wild"]:
+                    self.draw_pile.append((number, "colorless"))
+                else:
+                    self.draw_pile.append(c)
+
+            self.discard_pile.clear()
+
+            while True:
+                card = self.draw_pile.pop()
+                number, color = card
+                if number in ["wild", "+4"]:
+                    self.draw_pile = [card] + self.draw_pile
+                else:
+                    self.discard_pile.append(card)
+                    break
+
+        drawn = self.draw_pile.pop()
         #return drawn
-        return ("", "")
+        return drawn
 
 
 def make_deck():
