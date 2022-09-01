@@ -93,12 +93,12 @@ async def general_handler(key, websocket):
             start_time = time.time()
             time_elapsed = 0
             while True:
-                #send message indicating that input is being read
-                await websocket.send(json.dumps(READING_MOVE_MESSAGE))
-                await websocket.send(json.dumps(create_state_message(game.get_state(key))))
-
                 time_elapsed = time.time() - start_time
                 time_remaining = TURN_TIMEOUT_IN_SECONDS - time_elapsed
+                #send message indicating that input is being read
+                await websocket.send(json.dumps(READING_MOVE_MESSAGE))
+                await websocket.send(json.dumps(create_state_message(game.get_state(key), time_remaining)))
+                
                 print(time_remaining)
                 #try receiving json from client
                 try:
@@ -122,7 +122,7 @@ async def general_handler(key, websocket):
                     # await websocket.send(json.dumps(VALID_MOVE_MESSAGE))
                     #send game state response to client
                     game_state = game.get_state(key)
-                    await websocket.send(json.dumps(create_state_message(game_state)))
+                    await websocket.send(json.dumps(create_state_message(game_state, time_remaining)))
 
                     #message did not end turn
                     if result is False:

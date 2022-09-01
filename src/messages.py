@@ -26,5 +26,5 @@ def has_valid_key(msg, keys, registry: Registry):
     key = msg['key']
     return key in keys and not registry.is_registered(key)
 
-def create_state_message(state_information: dict):
-    return {"type": "state", "state": state_information}
+def create_state_message(state_information: dict, time: float):
+    return {"type": "state", "state": state_information, "timer": time}
