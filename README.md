@@ -4,7 +4,7 @@ A server to host a round-robin tournament of Uno games. The code can easily be e
 
 The current skeleton code and the `UnoGame` implementation offer a JSON API for interacting with the server through WebSocket:
 
-Game agnostic API:
+## Game agnostic API:
 
 When tournament has not started: 
 
@@ -50,7 +50,7 @@ After the tournament has started:
 
      Received after a game start message (see 1. above), and after a valid or invalid move message (6. and 7. above). Contains a dictionary <state_dict> encoding the state of the game, and a float <time> denoting how many seconds are left in the timer. Note, not all posible moves end the player's turn. An explicit turn ended message (see 4. above) will be sent shortly afterwards if the turn was ended. Otherwise, another reading move message (see 5. above) will be sent instead, indicating that another player move is being read.
 
-`UnoGame` specific API:
+## `UnoGame` specific API:
 * Sent messages;
     1. tbd...
 
